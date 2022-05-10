@@ -1,29 +1,31 @@
 const express = require('express');
 const router  = express.Router();
 const Restaurant = require('../models/restaurant');
-
 // GET => render the form to create a new restaurant
 router.get('/new', (req, res, next) => {
   res.render('restaurants/new');
 });
 
-// POST => to create new restaurant and save it to the DB
 router.post('/', (req, res, next) => {
-  // add location object here
-  
+  const { longitude, latitude, name, description } = req.body;
 
 	const newRestaurant = new Restaurant({
-		name: req.body.name,
-		description: req.body.description
-	});
+    name,
+    description,
+    location: {
+      type: 'Point',
+      coordinates: [longitude, latitude]
+    }
+  });
 
-	newRestaurant.save((error) => {
-		if (error) { 
-			next(error); 
-		} else { 
-			res.redirect('/restaurants');
-		}
-	});
+	newRestaurant
+    .save()
+    .then(restaurant => {
+      res.redirect('/restaurants');
+    })
+    .catch(error => {
+      next(error);
+    });
 });
 
 // GET => to retrieve all the restaurants from the DB
@@ -56,10 +58,12 @@ router.post('/:restaurant_id', (req, res, next) => {
     } else {
 			restaurant.name        = req.body.name;
 			restaurant.description = req.body.description;
+			
 			restaurant.save(error => {
 				if (error) { 
 					next(error); 
 				} else { 
+					
 					res.redirect(`/restaurants/${req.params.restaurant_id}`); 
 				}
 			});
@@ -112,5 +116,7 @@ router.get('/:restaurant_id', (req, res, next) => {
 		}
 	});
 });
+
+
 
 module.exports = router;
